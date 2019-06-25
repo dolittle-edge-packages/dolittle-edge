@@ -1,0 +1,56 @@
+#!/bin/bash
+
+if [ -z "$1" ]; then
+	CERT_DIR="$PWD"
+else
+	CERT_DIR=$(cd "$1" && pwd)
+fi
+
+print_usage () {
+	echo "Usage: dolittle-configure-openvpn [dir]"
+	echo ""
+	echo "  dir: Optional path to directory containing configuration and certificate files."
+}
+
+# To install the configuration and certificates, the script needs to run as root.
+if [ $EUID -ne 0 ]; then
+	echo "This script must be run as root"
+	print_usage
+	exit 1
+fi
+
+# Check that all files are present before doing anything 
+if [ ! -f "$CERT_DIR/client.conf" ]; then
+	echo "Cannot find 'client.conf' in '$CERT_DIR'."
+	print_usage
+	exit 2
+fi
+if [ ! -f "$CERT_DIR/ca.crt" ]; then
+	echo "Cannot find 'ca.crt' in '$CERT_DIR'."
+	print_usage
+	exit 2
+fi
+if [ ! -f "$CERT_DIR/private.key" ]; then
+	echo "Cannot find 'private.key' in '$CERT_DIR'."
+	print_usage
+	exit 2
+fi
+if [ ! -f "$CERT_DIR/public.crt" ]; then
+	echo "Cannot find 'public.crt' in '$CERT_DIR'."
+	print_usage
+	exit 2
+fi
+
+# Install all the files
+echo "Copying remote access certificates..."
+install -D -m 644 "$CERT_DIR/client.conf" /etc/openvpn/client/dolittle-edge.conf
+install -D -m 644 "$CERT_DIR/ca.crt" /etc/openvpn/dolittle-edge/ca.crt
+install -D -m 600 "$CERT_DIR/private.key" /etc/openvpn/dolittle-edge/private.key
+install -D -m 644 "$CERT_DIR/public.crt" /etc/openvpn/dolittle-edge/public.crt
+
+# Enable the VPN connection
+echo "Enabling remote access service..."
+systemctl enable openvpn-client@dolittle-edge.service
+systemctl start openvpn-client@dolittle-edge.service
+
+echo "Done!"
