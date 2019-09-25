@@ -4,8 +4,8 @@ Release  : 1
 License  : MIT
 Summary  : Dolittle Edge
 URL      : https://github.com/dolittle-edge/dolittle-edge-clearlinux
-Source0  : ./dolittle-configure-openvpn
-Source1  : ./docker-logrotate.conf
+Source0  : file://dolittle-configure-openvpn
+Source1  : file://docker-logrotate.conf
 
 %description
 
